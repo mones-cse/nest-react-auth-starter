@@ -22,6 +22,7 @@ A simple authentication boilerplate with NestJS backend and React frontend.
 - [x] Step 6: Frontend initialized with Vite, React, and Tailwind CSS
 - [x] Step 7: Authentication context and API service created
 - [x] Step 8: Register and Login pages created
+- [x] Step 9: Dashboard page created with user profile display
 
 ## Environment Variables
 - Root .env file for Docker configuration
