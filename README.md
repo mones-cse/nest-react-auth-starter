@@ -17,6 +17,7 @@ A simple authentication boilerplate with NestJS backend and React frontend.
 - [x] Step 1: Project root structure created
 - [x] Step 2: Backend initialized with environment configuration
 - [x] Step 3: User entity created
+- [x] Step 4: Users module created with service methods
 
 ## Environment Variables
 - Root .env file for Docker configuration
