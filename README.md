@@ -19,11 +19,15 @@ A simple authentication boilerplate with NestJS backend and React frontend.
 - [x] Step 3: User entity created
 - [x] Step 4: Users module created with service methods
 - [x] Step 5: Authentication module with JWT implemented
+- [x] Step 6: Frontend initialized with Vite, React, and Tailwind CSS
 
 ## Environment Variables
 - Root .env file for Docker configuration
 - Backend .env for NestJS configuration
 - Frontend .env for Vite configuration
+
+## Frontend Environment Variables
+VITE_API_URL=http://localhost:3000
 
 ## Backend Environment Variables
 DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME, JWT_SECRET, JWT_EXPIRES_IN, PORT, FRONTEND_URL
