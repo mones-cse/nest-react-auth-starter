@@ -45,6 +45,7 @@ JWT_SECRET=your-secret-key-change-in-production
 JWT_EXPIRES_IN=24h
 PORT=3000
 FRONTEND_URL=http://localhost:5173
+SWAGGER_ENABLED=true
 ```
 
 **frontend/.env** (for Vite):
@@ -86,6 +87,8 @@ npm run dev
 - PostgreSQL runs on port 5432
 - JWT tokens expire in 24 hours
 - Passwords are hashed with bcrypt (10 rounds)
+- Swagger documentation available at /api/docs
+- Use "Authorize" button in Swagger UI to test protected endpoints
 
 ## Project Structure
 ```
@@ -154,6 +157,13 @@ VITE_API_URL=http://localhost:3000
 | created_at | TIMESTAMP | Default: now() |
 | updated_at | TIMESTAMP | Auto-update |
 
+## API Documentation
+- **Swagger UI**: http://localhost:3000/api/docs
+- Interactive API testing with authentication support
+- Automatic request/response examples
+- JWT Bearer token authentication integrated
+- See interactive documentation at /api/docs for detailed request/response schemas
+
 ## API Endpoints
 
 ### Authentication
@@ -194,7 +204,7 @@ VITE_API_URL=http://localhost:3000
 }
 ```
 
-## Steps I followed
+## Setup Progress
 - [x] Step 1: Project root structure created
 - [x] Step 2: Backend initialized with environment configuration
 - [x] Step 3: User entity created
@@ -206,3 +216,4 @@ VITE_API_URL=http://localhost:3000
 - [x] Step 9: Dashboard page created with user profile display
 - [x] Step 10: Routing configured with protected routes
 - [x] Step 11: Final configuration and documentation complete
+- [x] Milestone 2 - Step 1: Swagger documentation added
