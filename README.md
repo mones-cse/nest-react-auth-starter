@@ -7,31 +7,125 @@ A simple authentication boilerplate with NestJS backend and React frontend.
 - **Backend**: NestJS + TypeORM
 - **Database**: PostgreSQL (Docker)
 
-## Project Structure
-- .env
-- docker-compose.yml
-- README.md
-- .gitignore
+## Prerequisites
+- Node.js (v18 or higher)
+- Docker and Docker Compose
+- npm or yarn
 
-## Setup Progress
-- [x] Step 1: Project root structure created
-- [x] Step 2: Backend initialized with environment configuration
-- [x] Step 3: User entity created
-- [x] Step 4: Users module created with service methods
-- [x] Step 5: Authentication module with JWT implemented
-- [x] Step 6: Frontend initialized with Vite, React, and Tailwind CSS
-- [x] Step 7: Authentication context and API service created
-- [x] Step 8: Register and Login pages created
-- [x] Step 9: Dashboard page created with user profile display
-- [x] Step 10: Routing configured with protected routes
+## Installation & Setup
 
-## Environment Variables
-- Root .env file for Docker configuration
-- Backend .env for NestJS configuration
-- Frontend .env for Vite configuration
+### 1. Clone and Install
+```bash
+# Install backend dependencies
+cd backend && npm install
 
-## Frontend Environment Variables
+# Install frontend dependencies
+cd ../frontend && npm install
+```
+
+### 2. Environment Setup
+Copy .env files and configure:
+
+**Root .env** (for Docker):
+```
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres123
+POSTGRES_DB=nest-react-boilerplate-db
+POSTGRES_PORT=5432
+```
+
+**backend/.env** (for NestJS):
+```
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=postgres123
+DB_NAME=nest-react-boilerplate-db
+JWT_SECRET=your-secret-key-change-in-production
+JWT_EXPIRES_IN=24h
+PORT=3000
+FRONTEND_URL=http://localhost:5173
+```
+
+**frontend/.env** (for Vite):
+```
 VITE_API_URL=http://localhost:3000
+```
+
+### 3. Start Database
+```bash
+docker-compose up -d
+```
+
+### 4. Start Backend
+```bash
+cd backend
+npm run start:dev
+```
+
+### 5. Start Frontend
+```bash
+cd frontend
+npm run dev
+```
+
+### 6. Access Application
+- **Frontend**: http://localhost:5173
+- **Backend**: http://localhost:3000
+- **Database**: localhost:5432
+
+## Usage Flow
+1. Register a new account at `/register`
+2. Login with credentials at `/login`
+3. View profile at `/dashboard`
+4. Logout to return to login
+
+## Development Notes
+- Backend runs on port 3000
+- Frontend runs on port 5173 (Vite default)
+- PostgreSQL runs on port 5432
+- JWT tokens expire in 24 hours
+- Passwords are hashed with bcrypt (10 rounds)
+
+## Project Structure
+```
+nest-react-boilerplate/
+├── backend/
+│   ├── src/
+│   │   ├── auth/
+│   │   │   ├── dto/
+│   │   │   ├── guards/
+│   │   │   ├── strategies/
+│   │   │   ├── auth.controller.ts
+│   │   │   ├── auth.service.ts
+│   │   │   └── auth.module.ts
+│   │   ├── users/
+│   │   │   ├── entities/
+│   │   │   ├── users.controller.ts
+│   │   │   ├── users.service.ts
+│   │   │   └── users.module.ts
+│   │   ├── app.module.ts
+│   │   └── main.ts
+│   └── .env
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   └── PrivateRoute.jsx
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx
+│   │   ├── pages/
+│   │   │   ├── Login.jsx
+│   │   │   ├── Register.jsx
+│   │   │   └── Dashboard.jsx
+│   │   ├── services/
+│   │   │   └── api.js
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   └── .env
+├── docker-compose.yml
+├── .env
+└── README.md
+```
 
 ## Frontend Features
 - JWT token storage in localStorage
@@ -44,6 +138,9 @@ VITE_API_URL=http://localhost:3000
 
 ## Backend Environment Variables
 DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME, JWT_SECRET, JWT_EXPIRES_IN, PORT, FRONTEND_URL
+
+## Frontend Environment Variables
+VITE_API_URL=http://localhost:3000
 
 ## Database Schema
 
@@ -96,3 +193,16 @@ DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME, JWT_SECRET, JWT_EXPIRES_IN,
   "email": "user@example.com"
 }
 ```
+
+## Steps I followed
+- [x] Step 1: Project root structure created
+- [x] Step 2: Backend initialized with environment configuration
+- [x] Step 3: User entity created
+- [x] Step 4: Users module created with service methods
+- [x] Step 5: Authentication module with JWT implemented
+- [x] Step 6: Frontend initialized with Vite, React, and Tailwind CSS
+- [x] Step 7: Authentication context and API service created
+- [x] Step 8: Register and Login pages created
+- [x] Step 9: Dashboard page created with user profile display
+- [x] Step 10: Routing configured with protected routes
+- [x] Step 11: Final configuration and documentation complete
