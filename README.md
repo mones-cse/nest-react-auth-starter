@@ -23,6 +23,7 @@ A simple authentication boilerplate with NestJS backend and React frontend.
 - [x] Step 7: Authentication context and API service created
 - [x] Step 8: Register and Login pages created
 - [x] Step 9: Dashboard page created with user profile display
+- [x] Step 10: Routing configured with protected routes
 
 ## Environment Variables
 - Root .env file for Docker configuration
@@ -37,6 +38,9 @@ VITE_API_URL=http://localhost:3000
 - Automatic token attachment to API requests
 - Protected route handling
 - Auth context for global state management
+- Private route component for /dashboard protection
+- Automatic redirects for unauthenticated users
+- Loading states during authentication checks
 
 ## Backend Environment Variables
 DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME, JWT_SECRET, JWT_EXPIRES_IN, PORT, FRONTEND_URL
