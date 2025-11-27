@@ -1,6 +1,7 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, InternalServerErrorException, Param, Post, Query, Req, Res, Response } from '@nestjs/common';
-
+import { Body, Controller, Get, HttpCode, HttpStatus, InternalServerErrorException, Param, Post, Query, Req, Res, Response, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import type { Response as ExpressResponse } from "express";
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SlackService } from './slack.service';
 
 @Controller('slack')
@@ -8,6 +9,7 @@ export class SlackController {
     constructor(private readonly slackService: SlackService) { }
 
     @Get('/install')
+    @ApiOperation({ summary: 'Install Slack app' })
     @HttpCode(HttpStatus.OK)
     async slackInstall(
         @Response() response: ExpressResponse
@@ -18,6 +20,7 @@ export class SlackController {
     }
 
     @Get("/oauth_redirect")
+    @ApiOperation({ summary: 'Handle Slack OAuth redirect' })
     @HttpCode(HttpStatus.OK)
     async handleOAuthRedirect(
         @Query("code") code: string,
@@ -33,6 +36,7 @@ export class SlackController {
     }
 
     @Post('messages')
+    @ApiOperation({ summary: 'Handle Slack message events' })
     @HttpCode(200)
     async handleMessages(
         @Req() request: any,
@@ -68,4 +72,22 @@ export class SlackController {
             return response.status(500).send({ error: 'Internal server error' });
         }
     }
+
+    @Get('workspaces')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Get all Slack workspaces for the authenticated user' })
+    async getWorkspaces(@Req() request: any) {
+        try {
+            console.log('Fetching workspaces for user:', request?.user);
+            const userId = request?.user?.id || null;
+            const workspaces = await this.slackService.getSlackWorkspaces(userId);
+            return workspaces;
+        } catch (error) {
+            console.error("Error fetching workspaces", error);
+            throw new InternalServerErrorException("Failed to fetch workspaces");
+        }
+    }
+
+
 }

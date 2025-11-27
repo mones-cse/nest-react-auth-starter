@@ -159,6 +159,15 @@ export class SlackService {
     }
 
 
+    // workspace 
+    getSlackWorkspaces = async (userId: string) => {
+        const workspaces = await this.slackInstallationRepo.find({
+            where: { userId: userId },
+            select: ['slackTeamId', 'slackTeamName', 'isActive', 'createdAt', 'updatedAt', 'id']
+        })
+        return workspaces
+    }
+
 
 
 
