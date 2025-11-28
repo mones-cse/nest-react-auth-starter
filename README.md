@@ -1,6 +1,7 @@
-# Nest React Boilerplate
+# Nest React SlackFlow Starter
 
-A simple authentication boilerplate with NestJS backend and React frontend.
+Authentication boilerplate with NestJS (backend), React (frontend), and basic Slack integration for reading channel messages using a bot.
+![alt text](ui.png)
 
 ## Tech Stack
 - **Frontend**: React + Vite + Tailwind CSS
