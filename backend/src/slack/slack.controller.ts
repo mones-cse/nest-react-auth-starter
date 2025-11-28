@@ -1,7 +1,8 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, InternalServerErrorException, Param, Post, Query, Req, Res, Response, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, InternalServerErrorException, NotFoundException, Param, Patch, Post, Query, Req, Res, Response, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import type { Response as ExpressResponse } from "express";
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { UpdateSlackWorkspaceDto } from './dto/update-slack-workspace.dto';
 import { SlackService } from './slack.service';
 
 @Controller('slack')
@@ -86,6 +87,49 @@ export class SlackController {
         } catch (error) {
             console.error("Error fetching workspaces", error);
             throw new InternalServerErrorException("Failed to fetch workspaces");
+        }
+    }
+
+    @Patch('workspaces/:id')
+    @ApiOperation({ summary: 'Activate or Deactivate a Slack workspace' })
+    async updateWorkspace(
+        @Req() request: any,
+        @Param('id') id: string,
+        @Body() updateData: UpdateSlackWorkspaceDto
+    ) {
+        try {
+            const userId = request?.user?.userId || null;
+            const result = await this.slackService.updateSlackWorkspace(id, userId, updateData);
+            return result
+        } catch (error) {
+            console.error("Error updating workspace", error);
+            if (error instanceof NotFoundException || error instanceof HttpException) {
+                throw error;
+            }
+            throw new InternalServerErrorException(
+                "Failed to update workspace ", error?.message || "Unknown error"
+            );
+        }
+    }
+
+    @Delete('workspaces/:id')
+    @ApiOperation({ summary: 'Delete a Slack workspace' })
+    async deleteWorkspace(
+        @Req() request: any,
+        @Param('id') id: string,
+    ) {
+        try {
+            const userId = request?.user?.userId || null;
+            const result = await this.slackService.deleteSlackWorkspace(id, userId);
+            return result
+        } catch (error) {
+            console.error("Error deleting workspace", error);
+            if (error instanceof NotFoundException || error instanceof HttpException) {
+                throw error;
+            }
+            throw new InternalServerErrorException(
+                "Failed to delete workspace ", error?.message || "Unknown error"
+            );
         }
     }
 

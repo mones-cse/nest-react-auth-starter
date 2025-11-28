@@ -1,8 +1,9 @@
-import { BadRequestException, forwardRef, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import axios from 'axios';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
+import { UpdateSlackWorkspaceDto } from './dto/update-slack-workspace.dto';
 import { SlackInstallation } from './entities/slack.entity';
 
 @Injectable()
@@ -168,12 +169,25 @@ export class SlackService {
         return workspaces
     }
 
+    updateSlackWorkspace = async (id: string, userId: string, updateData: UpdateSlackWorkspaceDto) => {
+        const result = await this.slackInstallationRepo.update({ id, userId }, updateData);
+        if (result.affected === 0) {
+            throw new NotFoundException('Workspace not found or unauthorized');
+        }
+        return {
+            id,
+            ...updateData,
+            updatedAt: new Date()
+        };
+    }
 
-
-
-
-
-
+    deleteSlackWorkspace = async (id: string, userId: string) => {
+        const result = await this.slackInstallationRepo.delete({ id, userId });
+        if (result.affected === 0) {
+            throw new NotFoundException('Workspace not found or unauthorized');
+        }
+        return true;
+    }
 
     async saveMessage(event: any) {
         try {
