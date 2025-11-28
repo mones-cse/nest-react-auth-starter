@@ -9,6 +9,14 @@ function Dashboard() {
   const [workspaces, setWorkspaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // State for toggle loading
+  const [togglingId, setTogglingId] = useState(null);
+
+  // State for delete modal
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [workspaceToDelete, setWorkspaceToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchWorkspaces = async () => {
@@ -35,8 +43,56 @@ function Dashboard() {
     window.location.href = 'http://localhost:4000/slack/install';
   };
 
+  const handleToggleWorkspace = async (id, currentStatus) => {
+    setTogglingId(id);
+    try {
+      const response = await api.patch(`/slack/workspaces/${id}`, {
+        isActive: !currentStatus
+      });
+      
+      // Update local state
+      setWorkspaces(workspaces.map(ws => 
+        ws.id === id ? { ...ws, isActive: response.data.isActive } : ws
+      ));
+    } catch (err) {
+      console.error('Failed to toggle workspace:', err);
+      alert('Failed to update workspace status');
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const handleDeleteClick = (workspace) => {
+    setWorkspaceToDelete(workspace);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!workspaceToDelete) return;
+    
+    setDeleting(true);
+    try {
+      await api.delete(`/slack/workspaces/${workspaceToDelete.id}`);
+      
+      // Remove from local state
+      setWorkspaces(workspaces.filter(ws => ws.id !== workspaceToDelete.id));
+      setDeleteModalOpen(false);
+      setWorkspaceToDelete(null);
+    } catch (err) {
+      console.error('Failed to delete workspace:', err);
+      alert('Failed to delete workspace');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteModalOpen(false);
+    setWorkspaceToDelete(null);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center p-4 space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col items-center justify-center p-4 space-y-8 relative">
       {/* User Profile Card */}
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-8">
         <div className="text-center mb-8">
@@ -114,16 +170,42 @@ function Dashboard() {
                   <div>
                     <div className="flex items-center gap-3 mb-1">
                       <h4 className="font-bold text-gray-900">{workspace.slackTeamName}</h4>
-                      {workspace.isActive && (
-                        <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full border border-green-200">
-                          Active
-                        </span>
-                      )}
+                      <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full border ${
+                        workspace.isActive 
+                          ? 'bg-green-100 text-green-800 border-green-200' 
+                          : 'bg-gray-100 text-gray-800 border-gray-200'
+                      }`}>
+                        {workspace.isActive ? 'Active' : 'Inactive'}
+                      </span>
                     </div>
                     <p className="text-sm text-gray-500 font-mono mb-1">ID: {workspace.slackTeamId}</p>
                     <p className="text-xs text-gray-400">
                       Connected on {new Date(workspace.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                     </p>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => handleToggleWorkspace(workspace.id, workspace.isActive)}
+                      disabled={togglingId === workspace.id}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                        workspace.isActive
+                          ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          : 'bg-green-100 text-green-700 hover:bg-green-200'
+                      } ${togglingId === workspace.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      {togglingId === workspace.id ? '...' : workspace.isActive ? 'Deactivate' : 'Activate'}
+                    </button>
+                    
+                    <button
+                      onClick={() => handleDeleteClick(workspace)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Delete Workspace"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               ))}
@@ -131,6 +213,51 @@ function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 transform transition-all scale-100">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Delete Workspace?</h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Are you sure you want to delete the workspace connection for <span className="font-semibold">{workspaceToDelete?.slackTeamName}</span>? This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={handleCancelDelete}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors"
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors flex items-center"
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

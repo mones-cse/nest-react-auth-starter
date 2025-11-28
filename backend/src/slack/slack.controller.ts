@@ -91,6 +91,8 @@ export class SlackController {
     }
 
     @Patch('workspaces/:id')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     @ApiOperation({ summary: 'Activate or Deactivate a Slack workspace' })
     async updateWorkspace(
         @Req() request: any,
@@ -98,7 +100,7 @@ export class SlackController {
         @Body() updateData: UpdateSlackWorkspaceDto
     ) {
         try {
-            const userId = request?.user?.userId || null;
+            const userId = request?.user?.id || null;
             const result = await this.slackService.updateSlackWorkspace(id, userId, updateData);
             return result
         } catch (error) {
@@ -113,13 +115,15 @@ export class SlackController {
     }
 
     @Delete('workspaces/:id')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
     @ApiOperation({ summary: 'Delete a Slack workspace' })
     async deleteWorkspace(
         @Req() request: any,
         @Param('id') id: string,
     ) {
         try {
-            const userId = request?.user?.userId || null;
+            const userId = request?.user?.id || null;
             const result = await this.slackService.deleteSlackWorkspace(id, userId);
             return result
         } catch (error) {
