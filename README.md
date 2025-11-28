@@ -43,14 +43,18 @@ DB_PASSWORD=postgres123
 DB_NAME=nest-react-boilerplate-db
 JWT_SECRET=your-secret-key-change-in-production
 JWT_EXPIRES_IN=24h
-PORT=3000
+PORT=4000
 FRONTEND_URL=http://localhost:5173
 SWAGGER_ENABLED=true
+SLACK_CLIENT_ID=your-slack-client-id
+SLACK_CLIENT_SECRET=your-slack-client-secret
+SLACK_SIGNING_SECRET=your-slack-signing-secret
+SLACK_REDIRECT_URI=your-slack-redirect-uri
 ```
 
 **frontend/.env** (for Vite):
 ```
-VITE_API_URL=http://localhost:3000
+VITE_API_URL=http://localhost:4000
 ```
 
 ### 3. Start Database
@@ -72,7 +76,7 @@ npm run dev
 
 ### 6. Access Application
 - **Frontend**: http://localhost:5173
-- **Backend**: http://localhost:3000
+- **Backend**: http://localhost:4000
 - **Database**: localhost:5432
 
 ## Usage Flow
@@ -82,7 +86,7 @@ npm run dev
 4. Logout to return to login
 
 ## Development Notes
-- Backend runs on port 3000
+- Backend runs on port 4000
 - Frontend runs on port 5173 (Vite default)
 - PostgreSQL runs on port 5432
 - JWT tokens expire in 24 hours
@@ -107,6 +111,12 @@ nest-react-boilerplate/
 │   │   │   ├── users.controller.ts
 │   │   │   ├── users.service.ts
 │   │   │   └── users.module.ts
+│   │   ├── slack/
+│   │   │   ├── dto/
+│   │   │   ├── entities/
+│   │   │   ├── slack.controller.ts
+│   │   │   ├── slack.service.ts
+│   │   │   └── slack.module.ts
 │   │   ├── app.module.ts
 │   │   └── main.ts
 │   └── .env
@@ -138,12 +148,8 @@ nest-react-boilerplate/
 - Private route component for /dashboard protection
 - Automatic redirects for unauthenticated users
 - Loading states during authentication checks
+- Slack workspace management (Connect, View, Toggle, Delete)
 
-## Backend Environment Variables
-DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME, JWT_SECRET, JWT_EXPIRES_IN, PORT, FRONTEND_URL
-
-## Frontend Environment Variables
-VITE_API_URL=http://localhost:3000
 
 ## Database Schema
 
@@ -154,6 +160,19 @@ VITE_API_URL=http://localhost:3000
 | email | VARCHAR | Unique, Not Null |
 | full_name | VARCHAR | Not Null |
 | password | VARCHAR | Not Null (Hashed) |
+| created_at | TIMESTAMP | Default: now() |
+| updated_at | TIMESTAMP | Auto-update |
+
+### Slack Installations Table
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | UUID | Primary Key |
+| user_id | UUID | Foreign Key (Users) |
+| slack_team_id | VARCHAR | Not Null |
+| slack_team_name | VARCHAR | Not Null |
+| access_token | VARCHAR | Not Null |
+| bot_token | VARCHAR | Not Null |
+| is_active | BOOLEAN | Default: true |
 | created_at | TIMESTAMP | Default: now() |
 | updated_at | TIMESTAMP | Auto-update |
 
@@ -172,6 +191,16 @@ VITE_API_URL=http://localhost:3000
 | POST | /auth/register | Register new user | No |
 | POST | /auth/login | Login user | No |
 | GET | /auth/profile | Get current user | Yes |
+
+### Slack Integration
+| Method | Endpoint | Description | Protected |
+|--------|----------|-------------|-----------|
+| GET | /slack/install | Initiate Slack OAuth | No |
+| GET | /slack/oauth_redirect | Handle Slack OAuth callback | No |
+| POST | /slack/messages | Handle Slack events | No |
+| GET | /slack/workspaces | List connected workspaces | Yes |
+| PATCH | /slack/workspaces/:id | Toggle workspace status | Yes |
+| DELETE | /slack/workspaces/:id | Delete workspace connection | Yes |
 
 ### Request/Response Examples
 
@@ -203,17 +232,38 @@ VITE_API_URL=http://localhost:3000
   "email": "user@example.com"
 }
 ```
+## Where to find the slack credentials
+- go to https://api.slack.com/apps/ to find the app. lets say app id is `A0A07ESPHTQ`
+- for `SLACK_CLIENT_ID` go to `https://api.slack.com/apps/A0A07ESPHTQ/general?`
+- for `SLACK_CLIENT_SECRET` go to `https://api.slack.com/apps/A0A07ESPHTQ/general?`
+- for `SLACK_SIGNING_SECRET` go to `https://api.slack.com/apps/A0A07ESPHTQ/general?`
+- for `SLACK_REDIRECT_URI` go to `https://api.slack.com/apps/A0A07ESPHTQ/oauth?`
 
-## Setup Progress
-- [x] Step 1: Project root structure created
-- [x] Step 2: Backend initialized with environment configuration
-- [x] Step 3: User entity created
-- [x] Step 4: Users module created with service methods
-- [x] Step 5: Authentication module with JWT implemented
-- [x] Step 6: Frontend initialized with Vite, React, and Tailwind CSS
-- [x] Step 7: Authentication context and API service created
-- [x] Step 8: Register and Login pages created
-- [x] Step 9: Dashboard page created with user profile display
-- [x] Step 10: Routing configured with protected routes
-- [x] Step 11: Final configuration and documentation complete
-- [x] Milestone 2 - Step 1: Swagger documentation added
+
+## What to set in the slack app
+
+### Enable Manage distribution 
+go to https://app.slack.com/app-settings/T09D6SP1JE9/A0A07ESPHTQ/distribute and enable it
+
+### Enable Event Subscriptions
+go to https://api.slack.com/apps/A0A07ESPHTQ/event-subscriptions? to enable it
+and set request url for example `https://amani-pajamaed-singlehandedly.ngrok-free.app/slack/messages`
+
+### Redirect URL
+go to https://api.slack.com/apps/A0A07ESPHTQ/oauth? to set Redirect URLs for example `https://amani-pajamaed-singlehandedly.ngrok-free.app/slack/oauth_redirect`
+
+### Set Scopes
+go to https://api.slack.com/apps/A0A07ESPHTQ/oauth? to set Scopes 
+- Bot Token Scopes
+  - app_mentions:read
+  - channels:history
+  - channels:read
+  - chat:write
+  - groups:history
+  - groups:read
+  - im:history
+  - im:read
+- User Token Scopes
+  - user:read
+  - user:read.email
+
