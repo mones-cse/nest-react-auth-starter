@@ -178,7 +178,7 @@ nest-react-boilerplate/
 | updated_at | TIMESTAMP | Auto-update |
 
 ## API Documentation
-- **Swagger UI**: http://localhost:3000/api/docs
+- **Swagger UI**: http://localhost:4000/api/docs
 - Interactive API testing with authentication support
 - Automatic request/response examples
 - JWT Bearer token authentication integrated
@@ -202,6 +202,8 @@ nest-react-boilerplate/
 | GET | /slack/workspaces | List connected workspaces | Yes |
 | PATCH | /slack/workspaces/:id | Toggle workspace status | Yes |
 | DELETE | /slack/workspaces/:id | Delete workspace connection | Yes |
+| POST | /slack/notify | Send message to channel | Yes |
+| POST | /slack/notify-thread | Send reply to thread | Yes |
 
 ### Request/Response Examples
 
@@ -231,6 +233,27 @@ nest-react-boilerplate/
 {
   "id": "uuid",
   "email": "user@example.com"
+}
+```
+
+#### Send Message to Channel
+```json
+// POST /slack/notify
+// Header: Authorization: Bearer <token>
+{
+  "channelId": "C12345678",
+  "message": "Hello from API!"
+}
+```
+
+#### Send Reply to Thread
+```json
+// POST /slack/notify-thread
+// Header: Authorization: Bearer <token>
+{
+  "channelId": "C12345678",
+  "threadTs": "1706689205.513219",
+  "message": "Replying to a thread via API!"
 }
 ```
 ## Where to find the slack credentials
