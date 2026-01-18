@@ -1,5 +1,6 @@
 import { BadRequestException, forwardRef, Inject, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { WebClient } from '@slack/web-api';
 import axios from 'axios';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
@@ -27,7 +28,7 @@ export class SlackService {
             'im:read',           // See DM info
             'users:read',        // Get user info
             'app_mentions:read', // See @mentions
-            // 'chat:write',        // Check it if necessary 
+            'chat:write',        // Check it if necessary 
         ].join(',');
         const userScopes = [
             'users:read',
@@ -189,6 +190,7 @@ export class SlackService {
         return true;
     }
 
+    // interaction
     async saveMessage(event: any) {
         try {
             console.log('New message received:', {
@@ -221,6 +223,112 @@ export class SlackService {
         } catch (error) {
             console.error('Error saving message:', error);
             throw error;
+        }
+    }
+
+    async sendMessageToChannel(userId: string, channelId: string, message: string) {
+        console.log('Do nothing', userId, channelId, message);
+        try {
+            // Get an active Slack installation for this user
+            const installation = await this.slackInstallationRepo.findOne({
+                where: {
+                    userId: userId,
+                    isActive: true
+                }
+            });
+
+            if (!installation) {
+                throw new NotFoundException('No active Slack workspace found for this user');
+            }
+
+            // Initialize Slack Web Client with bot token
+            const slackClient = new WebClient(installation.botToken);
+
+            // Send the message
+            const result = await slackClient.chat.postMessage({
+                channel: channelId,
+                text: message
+            });
+
+            console.log('Message sent successfully:', result);
+
+            return {
+                ok: result.ok,
+                channel: result.channel,
+                ts: result.ts,
+                messageId: result.ts
+            };
+        } catch (error) {
+            console.error('Error sending message to Slack:', error);
+
+            if (error.data?.error === 'channel_not_found') {
+                throw new NotFoundException('Slack channel not found');
+            }
+            if (error.data?.error === 'not_in_channel') {
+                throw new BadRequestException('Bot is not a member of this channel');
+            }
+            if (error.data?.error === 'invalid_auth') {
+                throw new BadRequestException('Invalid Slack authentication token');
+            }
+
+            throw new InternalServerErrorException('Failed to send Slack message');
+        }
+    }
+
+    async sendMessageToThread(userId: string, channelId: string, threadTs: string, message: string) {
+        try {
+            // Get an active Slack installation for this user
+            const installation = await this.slackInstallationRepo.findOne({
+                where: {
+                    userId: userId,
+                    isActive: true
+                }
+            });
+
+            if (!installation) {
+                throw new NotFoundException('No active Slack workspace found for this user');
+            }
+
+            // Initialize Slack Web Client with bot token
+            const slackClient = new WebClient(installation.botToken);
+
+            // Send the message as a thread reply
+            const result = await slackClient.chat.postMessage({
+                channel: channelId,
+                text: message,
+                thread_ts: threadTs // This makes it a thread reply
+            });
+
+            console.log('Thread reply sent successfully:', result);
+
+            return {
+                ok: result.ok,
+                channel: result.channel,
+                ts: result.ts,
+                messageId: result.ts,
+                threadTs: threadTs,
+                isThreadReply: true
+            };
+        } catch (error) {
+            console.error('Error sending thread message to Slack:', error);
+
+            if (error.data?.error === 'channel_not_found') {
+                throw new NotFoundException('Slack channel not found');
+            }
+            if (error.data?.error === 'not_in_channel') {
+                throw new BadRequestException('Bot is not a member of this channel');
+            }
+            if (error.data?.error === 'invalid_auth') {
+                throw new BadRequestException('Invalid Slack authentication token');
+            }
+            if (error.data?.error === 'thread_not_found') {
+                throw new NotFoundException('Thread not found - invalid thread_ts');
+            }
+            if (error.data?.error === 'message_not_found') {
+                throw new NotFoundException('Parent message not found');
+            }
+
+            throw new InternalServerErrorException('Failed to send thread reply');
         }
     }
 }

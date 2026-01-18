@@ -2,6 +2,8 @@ import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Int
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import type { Response as ExpressResponse } from "express";
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { SendMessageDto } from './dto/send-message.dto';
+import { SendThreadMessageDto } from './dto/send-thread-message.dto';
 import { UpdateSlackWorkspaceDto } from './dto/update-slack-workspace.dto';
 import { SlackService } from './slack.service';
 
@@ -133,6 +135,69 @@ export class SlackController {
             }
             throw new InternalServerErrorException(
                 "Failed to delete workspace ", error?.message || "Unknown error"
+            );
+        }
+    }
+
+    @Post('notify')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Send a message to a Slack channel' })
+    async sendMessage(
+        @Req() request: any,
+        @Body() sendMessageDto: SendMessageDto
+    ) {
+        try {
+            const userId = request?.user?.id || null;
+            const result = await this.slackService.sendMessageToChannel(
+                userId,
+                sendMessageDto.channelId,
+                sendMessageDto.message
+            );
+            return {
+                success: true,
+                message: 'Message sent successfully',
+                data: result
+            };
+        } catch (error) {
+            console.error("Error sending Slack message", error);
+            if (error instanceof NotFoundException || error instanceof HttpException) {
+                throw error;
+            }
+            throw new InternalServerErrorException(
+                "Failed to send message: " + (error?.message || "Unknown error")
+            );
+        }
+    }
+
+    @Post('notify-thread')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Send a reply message to a Slack thread' })
+    async sendThreadMessage(
+        @Req() request: any,
+        @Body() sendThreadMessageDto: SendThreadMessageDto
+    ) {
+        try {
+            const userId = request?.user?.id || null;
+            const result = await this.slackService.sendMessageToThread(
+                userId,
+                sendThreadMessageDto.channelId,
+                sendThreadMessageDto.threadTs,
+                sendThreadMessageDto.message
+            );
+            return {
+                success: true,
+                message: 'Thread reply sent successfully',
+                data: result
+            };
+        } catch (error) {
+            console.error("Error sending Slack thread message", error);
+            if (error instanceof NotFoundException || error instanceof HttpException) {
+                throw error;
+            }
+            throw new InternalServerErrorException(
+                "Failed to send thread message: " + (error?.message || "Unknown error")
             );
         }
     }
