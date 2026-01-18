@@ -47,7 +47,7 @@ export class SlackController {
     ) {
         try {
             const body = request.body;
-            console.log('Received Slack message event:', body);
+            // console.log('Received Slack message event:', body);
             // Handle URL verification challenge
             if (body.type === 'url_verification') {
                 return response.status(200).json({ challenge: body.challenge });
@@ -199,6 +199,49 @@ export class SlackController {
             throw new InternalServerErrorException(
                 "Failed to send thread message: " + (error?.message || "Unknown error")
             );
+        }
+    }
+
+    @Post('register-notification')
+    @ApiOperation({ summary: 'Handle Slack slash command /register-notification' })
+    @HttpCode(200)
+    async handleRegisterNotification(
+        @Req() request: any,
+        @Res() response: ExpressResponse,
+    ) {
+        try {
+            const body = request.body;
+            console.log('📝 Received /register-notification command:', body);
+
+            // Extract data from slash command
+            const channelId = body.channel_id;
+            const userId = body.user_id;
+            const userName = body.user_name;
+            const teamId = body.team_id;
+            const text = body.text;
+
+            // Process the registration and create thread
+            const result = await this.slackService.handleRegisterNotification({
+                channelId,
+                threadTs: null,
+                userId,
+                userName,
+                teamId,
+                text
+            });
+
+            // Respond to Slack
+            return response.status(200).json({
+                response_type: 'ephemeral',
+                text: `✅ Notification thread created!\n📍 Channel: ${result.channelId}\n🧵 Thread: ${result.threadTs}`
+            });
+
+        } catch (error) {
+            console.error('Error handling /register-notification command:', error);
+            return response.status(200).json({
+                response_type: 'ephemeral',
+                text: `❌ Failed to create notification thread ${error?.message}`
+            });
         }
     }
 

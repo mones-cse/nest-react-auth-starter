@@ -28,7 +28,8 @@ export class SlackService {
             'im:read',           // See DM info
             'users:read',        // Get user info
             'app_mentions:read', // See @mentions
-            'chat:write',        // Check it if necessary 
+            'chat:write',        // Check it if necessary
+            'commands',          // Slash commands
         ].join(',');
         const userScopes = [
             'users:read',
@@ -193,13 +194,13 @@ export class SlackService {
     // interaction
     async saveMessage(event: any) {
         try {
-            console.log('New message received:', {
-                user: event.user,
-                channel: event.channel,
-                text: event.text,
-                ts: event.ts,
-                team: event.team
-            });
+            // console.log('New message received:', {
+            //     user: event.user,
+            //     channel: event.channel,
+            //     text: event.text,
+            //     ts: event.ts,
+            //     team: event.team
+            // });
 
             // TODO: Save to your database
             // Example structure:
@@ -214,12 +215,12 @@ export class SlackService {
                 // Add any other fields you need
             };
 
-            console.log('Prepared message data for saving:', messageData);
+            // console.log('Prepared message data for saving:', messageData);
 
             // Save to database here
             // await this.messageRepository.save(messageData);
 
-            console.log('Message saved successfully');
+            // console.log('Message saved successfully');
         } catch (error) {
             console.error('Error saving message:', error);
             throw error;
@@ -329,6 +330,75 @@ export class SlackService {
             }
 
             throw new InternalServerErrorException('Failed to send thread reply');
+        }
+    }
+
+    async handleRegisterNotification(data: {
+        channelId: string;
+        threadTs: string | null;
+        userId: string;
+        userName: string;
+        teamId: string;
+        text: string;
+    }) {
+        try {
+            console.log('🔔 Processing notification registration:', data);
+
+            // Find the slack installation for this team
+            const installation = await this.slackInstallationRepo.findOne({
+                where: {
+                    slackTeamId: data.teamId,
+                    isActive: true
+                }
+            });
+
+            if (!installation) {
+                throw new NotFoundException('No active Slack installation found for this team');
+            }
+
+            // Initialize Slack Web Client with bot token
+            const slackClient = new WebClient(installation.botToken);
+
+            // Post "Notification Thread" message to create a thread
+            const result = await slackClient.chat.postMessage({
+                channel: data.channelId,
+                text: 'Notification Thread'
+            });
+
+            // The ts from the posted message becomes the thread_ts
+            const threadTs = result.ts;
+
+            console.log('✅ Notification thread created successfully');
+            console.log('📊 Registration Details:');
+            console.log({
+                channelId: data.channelId,
+                threadTs: threadTs,
+                userId: data.userId,
+                userName: data.userName,
+                teamId: data.teamId,
+            });
+
+            // TODO: Save to your database
+            // const subscription = await this.notificationRepo.save({
+            //     channelId: data.channelId,
+            //     threadTs: threadTs,
+            //     slackUserId: data.userId,
+            //     slackTeamId: data.teamId,
+            //     isActive: true,
+            //     createdAt: new Date()
+            // });
+
+            return {
+                success: true,
+                channelId: data.channelId,
+                threadTs: threadTs,
+                userId: data.userId,
+                userName: data.userName,
+                teamId: data.teamId,
+            };
+        } catch (error) {
+            console.error('Error in handleRegisterNotification:', error);
+            throw error;
         }
     }
 }
